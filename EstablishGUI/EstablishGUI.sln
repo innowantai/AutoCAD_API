@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27703.2026
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EstablishGUI", "EstablishGUI\EstablishGUI.csproj", "{A8783309-F124-4E22-8045-0A53C69C81F5}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A8783309-F124-4E22-8045-0A53C69C81F5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A8783309-F124-4E22-8045-0A53C69C81F5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A8783309-F124-4E22-8045-0A53C69C81F5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A8783309-F124-4E22-8045-0A53C69C81F5}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {5C7C830C-DA6C-4AD1-BFBC-5FFEBF874543}
+	EndGlobalSection
+EndGlobal
