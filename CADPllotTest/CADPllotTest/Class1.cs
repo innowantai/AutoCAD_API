@@ -65,15 +65,19 @@ namespace CADPllotTest
             try
             { 
                 allData = ExcelClass.ExcelSaveAndRead.Read(excelPath, 3, 1, num);
+                List<List<Point>> PolyData = new List<List<Point>>();
                 foreach (var data in allData)
                 {
                     List<Point> Data = DataProces(data);
-                    CAD_PLOT(Data, acDoc, ed, acCurDb);
+                    //CAD_PLOT(Data, acDoc, ed, acCurDb); 
+                    //PolyData.Add(Data);
+                    CreatePolyLines(Data, acCurDb);
 
                     GetMileInformation(Data, ref milePoints, ref labelPoints, ref label, ref angle, mileOpen);
                     GetMileageBoundaryInformation(ref BoundaryCoordinate, ref allData, Data, kk, mileOpen);
                     kk = kk + 1;
                 }
+
 
                 MileageProces(acDoc,ed,acCurDb,milePoints,BoundaryCoordinate,labelPoints,label,angle, mileOpen);
             }
@@ -89,10 +93,11 @@ namespace CADPllotTest
                                         List<Point[]> milePoints, List<Point[]> BoundaryCoordinate, 
                                         List<Point[]> labelPoints, List<string> label, List<double> angle,bool mileOpen )
         {
-            if (!mileOpen) return false; 
+            if (!mileOpen) return false;
 
             foreach (Point[] mm in milePoints)
                 CAD_PLOT(GetVerticalPoinyByDistancd(2000, mm), acDoc, ed, acCurDb);
+             
 
             foreach (Point[] bb in BoundaryCoordinate)
                 CAD_PLOT(GetVerticalPoinyByDistancd(160000, bb), acDoc, ed, acCurDb);
@@ -237,6 +242,45 @@ namespace CADPllotTest
                 acTrans.Commit();
             }
         }
+
+        private static void CreatePolyLines(List<Point> points, Database db)
+        {
+            using (Transaction transaction = db.TransactionManager.StartTransaction())
+            {
+                ///////
+                BlockTable acBlkTbl;
+                acBlkTbl = transaction.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
+
+                // Open the Block table record Model space for write
+                BlockTableRecord acBlkTblRec;
+                acBlkTblRec = transaction.GetObject(acBlkTbl[BlockTableRecord.ModelSpace],
+                                                OpenMode.ForWrite) as BlockTableRecord;
+                
+                // Create a polyline with two segments (3 points)
+                using (Polyline acPoly = new Polyline())
+                {
+                    for (int i = 0; i < points.Count; i++)
+                    {
+                        acPoly.AddVertexAt(0, new Point2d(points[i].X, points[i].Y), 0, 0, 0);
+                    }
+                    //acPoly.AddVertexAt(0, new Point2d(points[points.Count - 1][1].X, points[points.Count - 1][1].Y), 0, 0, 0);
+
+                    //foreach (Point3d[] pp in points)
+                    //{ 
+                    //    acPoly.AddVertexAt(0, new Point2d(pp[0][0], pp[0][1]), 0, 0, 0);
+                    //}
+                    //acPoly.AddVertexAt(0, new Point2d(points[points.Count - 1][1][0], points[points.Count - 1][1][1]), 0, 0, 0);
+
+                    // Add the new object to the block table record and the transaction
+                    acBlkTblRec.AppendEntity(acPoly);
+                    transaction.AddNewlyCreatedDBObject(acPoly, true);
+                    transaction.Commit();
+                }
+            }
+        }
+
+
+
 
         private static void CAD_Text(Document acDoc, Database acCurDb, List<Point> point, string text, double angle)
         {
