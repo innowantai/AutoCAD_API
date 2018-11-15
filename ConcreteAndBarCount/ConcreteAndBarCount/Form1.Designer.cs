@@ -42,6 +42,8 @@
             this.chArc = new System.Windows.Forms.CheckBox();
             this.chCircle = new System.Windows.Forms.CheckBox();
             this.chText = new System.Windows.Forms.CheckBox();
+            this.label4 = new System.Windows.Forms.Label();
+            this.txtSave = new System.Windows.Forms.TextBox();
             this.SuspendLayout();
             // 
             // btnEnter
@@ -58,7 +60,7 @@
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(129, 67);
+            this.label1.Location = new System.Drawing.Point(129, 96);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(0, 12);
             this.label1.TabIndex = 1;
@@ -67,16 +69,16 @@
             // 
             this.lblLayers.AutoSize = true;
             this.lblLayers.Font = new System.Drawing.Font("微軟正黑體", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
-            this.lblLayers.Location = new System.Drawing.Point(80, 35);
+            this.lblLayers.Location = new System.Drawing.Point(80, 60);
             this.lblLayers.Name = "lblLayers";
-            this.lblLayers.Size = new System.Drawing.Size(90, 24);
+            this.lblLayers.Size = new System.Drawing.Size(95, 24);
             this.lblLayers.TabIndex = 2;
-            this.lblLayers.Text = "相關圖層:";
+            this.lblLayers.Text = "相關圖層 :";
             this.lblLayers.Click += new System.EventHandler(this.lblLayers_Click);
             // 
             // txtBox
             // 
-            this.txtBox.Location = new System.Drawing.Point(190, 38);
+            this.txtBox.Location = new System.Drawing.Point(190, 63);
             this.txtBox.Margin = new System.Windows.Forms.Padding(5);
             this.txtBox.Name = "txtBox";
             this.txtBox.Size = new System.Drawing.Size(125, 22);
@@ -97,7 +99,7 @@
             // rdb1
             // 
             this.rdb1.AutoSize = true;
-            this.rdb1.Location = new System.Drawing.Point(62, 41);
+            this.rdb1.Location = new System.Drawing.Point(62, 66);
             this.rdb1.Name = "rdb1";
             this.rdb1.Size = new System.Drawing.Size(14, 13);
             this.rdb1.TabIndex = 6;
@@ -189,11 +191,31 @@
             this.chText.Text = "文字(多行)";
             this.chText.UseVisualStyleBackColor = true;
             // 
+            // label4
+            // 
+            this.label4.AutoSize = true;
+            this.label4.Font = new System.Drawing.Font("微軟正黑體", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
+            this.label4.Location = new System.Drawing.Point(80, 27);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(95, 24);
+            this.label4.TabIndex = 16;
+            this.label4.Text = "儲存檔名 :";
+            // 
+            // txtSave
+            // 
+            this.txtSave.Location = new System.Drawing.Point(190, 27);
+            this.txtSave.Margin = new System.Windows.Forms.Padding(5);
+            this.txtSave.Name = "txtSave";
+            this.txtSave.Size = new System.Drawing.Size(125, 22);
+            this.txtSave.TabIndex = 17;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(413, 382);
+            this.Controls.Add(this.txtSave);
+            this.Controls.Add(this.label4);
             this.Controls.Add(this.chText);
             this.Controls.Add(this.chCircle);
             this.Controls.Add(this.chArc);
@@ -233,5 +255,7 @@
         private System.Windows.Forms.CheckBox chArc;
         private System.Windows.Forms.CheckBox chCircle;
         public System.Windows.Forms.CheckBox chText;
+        private System.Windows.Forms.Label label4;
+        public System.Windows.Forms.TextBox txtSave;
     }
 }

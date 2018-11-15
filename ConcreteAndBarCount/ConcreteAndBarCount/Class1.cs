@@ -27,15 +27,16 @@ namespace ConcreteAndBarCount
         public static string folder = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
         public static string SavePath;
         public static List<string> CheckedStr;
+        public static List<string> P_Layers;
 
         [CommandMethod("zz")]
         public static void Count()
         { 
             doc = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
             db = doc.Database;
-            ed = doc.Editor; 
-
-            form = new Form1(LayersToList(db, ed), doc, db, ed);
+            ed = doc.Editor;
+            P_Layers = LayersToList(db, ed);
+            form = new Form1(P_Layers, doc, db, ed);
             Application.ShowModalDialog(form);
             if (form.DialogResult == System.Windows.Forms.DialogResult.OK)
             {
@@ -59,85 +60,76 @@ namespace ConcreteAndBarCount
 
         public static void Main_Process(PromptSelectionResult ents)
         {
-            Entity entity = null;
-            //LayerTableRecord currentLayer = GetCurrentLayer(db);  
+            var targetLayers = from ss in P_Layers
+                               where ss.IndexOf(form.ResLayer) != -1
+                               select ss;
+             
+            Entity entity = null; 
             List<string> ResData = new List<string>();
             if (ents.Status == PromptStatus.OK)
             {
                 using (Transaction transaction = db.TransactionManager.StartTransaction())
                 {
                     SelectionSet SS = ents.Value;
-                    Dictionary<string, List<string>> Res = new Dictionary<string, List<string>>();
+                    Dictionary<string, List<U_Geometry>> Res = new Dictionary<string, List<U_Geometry>>();
                     List<U_Geometry> OBJs = new List<U_Geometry>();
                     foreach (ObjectId id in SS.GetObjectIds())
                     {
                         entity = (Entity)transaction.GetObject(id, OpenMode.ForWrite, true); 
                         string TargetslayName = entity.Layer;
-                        if (entity != null & TargetslayName.IndexOf(form.ResLayer) != -1)
-                        {
-                            foreach (string ss in CheckedStr)
+                        foreach (string LAYERS in targetLayers)
+                        { 
+                            if (entity != null & TargetslayName.IndexOf(LAYERS) != -1)
                             {
-                                if (entity.GetType().Name.IndexOf(ss) != -1)
+                                List<U_Geometry> rr = new List<U_Geometry>();
+                                foreach (string ss in CheckedStr)
                                 {
-                                    Object obj = transaction.GetObject(id, OpenMode.ForWrite, true);
-                                    OBJs.Add(new U_Geometry(obj)); 
+                                    if (entity.GetType().Name.IndexOf(ss) != -1)
+                                    {
+                                        Object obj = transaction.GetObject(id, OpenMode.ForWrite, true);
+                                        //OBJs.Add(new U_Geometry(obj));
+                                        rr = Res.ContainsKey(LAYERS) == false ? new List<U_Geometry>() : Res[LAYERS];
+                                        rr.Add(new U_Geometry(obj));
+                                        Res[LAYERS] = rr;
+                                    }
                                 }
                             }
                         }
                     }
                     transaction.Commit();
 
-                    List<List<U_Geometry>> RES = new List<List<U_Geometry>>();
-                    int[] Is_Pick = new int[OBJs.Count];
-                    for (int i = 0; i < OBJs.Count; i++)
+                    Dictionary<string, List<List<U_Geometry>>> RES = new Dictionary<string, List<List<U_Geometry>>>();
+                    foreach (KeyValuePair<string,List<U_Geometry>> RR in Res)
                     {
-                        if (Is_Pick[i] == 1)
-                            continue;
-
-                        int j = 0;
-                        Is_Pick[i] = 1;
-                        List<U_Geometry> tmp = new List<U_Geometry>();
-                        tmp.Add(OBJs[i]);
-                        while (j < OBJs.Count)
+                        List<U_Geometry> OBJss = new List<U_Geometry>();
+                        foreach (var obj in RR.Value)
                         {
-                            if (Is_Pick[j] == 0 && Is_Connect(tmp[0], OBJs[j]))
-                            {
-                                tmp.Add(OBJs[j]);
-                                Is_Pick[j] = 1;
-                                j = 0;
-                            }
-                            else if (tmp.Count > 1 && Is_Pick[j] == 0 && Is_Connect(tmp[tmp.Count - 1], OBJs[j]))
-                            {
-                                tmp.Add(OBJs[j]);
-                                Is_Pick[j] = 1;
-                                j = 0;
-                            }
-                            j++;
+                            OBJss.Add(obj); 
                         }
-
-                        RES.Add(tmp);
+                        RES[RR.Key] = SortByConnected(OBJss);
                     }
+
+                    
 
                     if (RES.Count != 0)
                     {
-                        StreamWriter sw = new StreamWriter(Path.Combine(SavePath, "CADResult.txt"));
+                        StreamWriter sw = new StreamWriter(Path.Combine(SavePath, form.txtSave.Text + ".txt"));
                         List<string> To_Excel = new List<string>();
-                        foreach (List<U_Geometry> res in RES)
+                        foreach (KeyValuePair<string, List<List<U_Geometry>>>  item in RES)
                         {
-                            foreach (U_Geometry ss in res)
+                            foreach (List<U_Geometry> res in item.Value)
                             {
-                                sw.WriteLine(ss.OutputStr);
-                                sw.Flush();
-                                To_Excel.Add(ss.OutputStr);
-                            }
+                                ed.WriteMessage(item.Key + "\n");
+                                foreach (U_Geometry ss in res)
+                                {
+                                    sw.WriteLine(ss.OutputStr);
+                                    sw.Flush();
+                                    To_Excel.Add(ss.OutputStr);
+                                }
+                            } 
                         }
                         sw.Close();
-
-                        string[,] TO_EXCEL = new string[To_Excel.Count, 5];
-                        foreach (string ss in To_Excel)
-                        {
-
-                        }
+                         
 
 
                     }
@@ -145,7 +137,40 @@ namespace ConcreteAndBarCount
             }
         }
 
-         
+        private static List<List<U_Geometry>> SortByConnected(List<U_Geometry> OBJs)
+        {
+            List<List<U_Geometry>> RES = new List<List<U_Geometry>>();
+            int[] Is_Pick = new int[OBJs.Count];
+            for (int i = 0; i < OBJs.Count; i++)
+            {
+                if (Is_Pick[i] == 1)
+                    continue;
+
+                int j = 0;
+                Is_Pick[i] = 1;
+                List<U_Geometry> tmp = new List<U_Geometry>();
+                tmp.Add(OBJs[i]);
+                while (j < OBJs.Count)
+                {
+                    if (Is_Pick[j] == 0 && Is_Connect(tmp[0], OBJs[j]))
+                    {
+                        tmp.Add(OBJs[j]);
+                        Is_Pick[j] = 1;
+                        j = 0;
+                    }
+                    else if (tmp.Count > 1 && Is_Pick[j] == 0 && Is_Connect(tmp[tmp.Count - 1], OBJs[j]))
+                    {
+                        tmp.Add(OBJs[j]);
+                        Is_Pick[j] = 1;
+                        j = 0;
+                    }
+                    j++;
+                }
+                RES.Add(tmp);
+            }
+
+            return RES;
+        }
 
         public static void Method_3_GetTextWordsIndicatedLayers(PromptSelectionResult ents)
         {
