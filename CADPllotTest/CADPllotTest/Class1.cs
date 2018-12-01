@@ -19,6 +19,15 @@ namespace CADPllotTest
 {
     public class Class1
     {
+
+        public static double LEN_BOUNDARY;
+        public static double LEN_MILE;
+        public static double LEN_TEXT ;
+        public static double SIZE_TEXT ;
+        public static double TIMES;
+        public static double TEXT_OFFSET_X;
+        public static double TEXT_OFFSET_Y;
+
         [CommandMethod("e2p")]
         public static void ChangePlotSetting()
         {
@@ -31,28 +40,36 @@ namespace CADPllotTest
             {
                 string excelPath = dialog.FileName;
                 CADProcess(excelPath);
-            } 
+            }
         }
-         
+
 
 
         private static bool CADProcess(string excelPath)
-        {
+        { 
+            LEN_BOUNDARY = 70000;
+            LEN_MILE = 2000;
+            LEN_TEXT = 5000;
+            SIZE_TEXT = 5000;
+            TIMES = 1;
+            TEXT_OFFSET_X = 1500;
+            TEXT_OFFSET_Y = 12000;
             Document acDoc = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
             Editor ed = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument.Editor;
             Database acCurDb = acDoc.Database;
 
             PromptStringOptions pStrOpts = new PromptStringOptions("\n 輸入預處理之excel分頁\n單頁 or \n多頁 (1,3,4 or 1-5) :  ");
             pStrOpts.AllowSpaces = true;
-            PromptResult pStrRes = acDoc.Editor.GetString(pStrOpts); 
-            string num = pStrRes.StringResult;
+            PromptResult pStrRes = acDoc.Editor.GetString(pStrOpts);
+            string num = pStrRes.StringResult.Trim();
 
             pStrOpts = new PromptStringOptions("\n 是否繪製里程(1 : 是 , 0 : 否):  ");
             pStrOpts.AllowSpaces = true;
             pStrRes = acDoc.Editor.GetString(pStrOpts);
-            string num2 = pStrRes.StringResult;
+            string num2 = pStrRes.StringResult.Trim();
 
             if (num.Trim() == "") return false;
+
 
             int kk = 1;
             List<string[,]> allData = new List<string[,]>();
@@ -61,14 +78,32 @@ namespace CADPllotTest
             List<Point[]> milePoints = new List<Point[]>();
             List<Point[]> labelPoints = new List<Point[]>();
             List<Point[]> BoundaryCoordinate = new List<Point[]>();
-            bool mileOpen = num2 == "1" ? true : false; 
+            bool mileOpen = num2 == "1" ? true : false;
             try
-            { 
+            {
+                ed.WriteMessage(LEN_MILE.ToString());
+                ed.WriteMessage(num2.ToString());
                 allData = ExcelClass.ExcelSaveAndRead.Read(excelPath, 3, 1, num);
                 List<List<Point>> PolyData = new List<List<Point>>();
+                bool open = true;
                 foreach (var data in allData)
                 {
                     List<Point> Data = DataProces(data);
+                    if (open)
+                    {
+                        Point3d p1 = new Point3d(Data[0].X, Data[0].Y, 0);
+                        Point3d p2 = new Point3d(Data[1].X, Data[1].Y, 0);
+                        double Len = (new Line(p1, p2)).Length;
+                        open = false;
+                        TIMES = Len / 670;
+                        LEN_BOUNDARY = LEN_BOUNDARY * TIMES;
+                        LEN_MILE = LEN_MILE * TIMES;
+                        LEN_TEXT = 3 * LEN_MILE;
+                        SIZE_TEXT = SIZE_TEXT * TIMES;
+                        TEXT_OFFSET_X = 0;
+                        TEXT_OFFSET_Y = 0; // TEXT_OFFSET_Y * TIMES;
+                    }
+
                     //CAD_PLOT(Data, acDoc, ed, acCurDb); 
                     //PolyData.Add(Data);
                     CreatePolyLines(Data, acCurDb);
@@ -79,7 +114,8 @@ namespace CADPllotTest
                 }
 
 
-                MileageProces(acDoc,ed,acCurDb,milePoints,BoundaryCoordinate,labelPoints,label,angle, mileOpen);
+
+                MileageProces(acDoc, ed, acCurDb, milePoints, BoundaryCoordinate, labelPoints, label, angle, mileOpen);
             }
             catch (System.Exception)
             {
@@ -89,30 +125,31 @@ namespace CADPllotTest
             return true;
         }
 
-        private static bool MileageProces(Document acDoc, Editor ed, Database acCurDb, 
-                                        List<Point[]> milePoints, List<Point[]> BoundaryCoordinate, 
-                                        List<Point[]> labelPoints, List<string> label, List<double> angle,bool mileOpen )
+        private static bool MileageProces(Document acDoc, Editor ed, Database acCurDb,
+                                        List<Point[]> milePoints, List<Point[]> BoundaryCoordinate,
+                                        List<Point[]> labelPoints, List<string> label, List<double> angle, bool mileOpen)
         {
             if (!mileOpen) return false;
 
+
             foreach (Point[] mm in milePoints)
-                CAD_PLOT(GetVerticalPoinyByDistancd(2000, mm), acDoc, ed, acCurDb);
-             
+                CAD_PLOT(GetVerticalPoinyByDistancd(LEN_MILE, mm), acDoc, ed, acCurDb);
+
 
             foreach (Point[] bb in BoundaryCoordinate)
-                CAD_PLOT(GetVerticalPoinyByDistancd(160000, bb), acDoc, ed, acCurDb);
-             
-            for (int kk = 0; kk < labelPoints.Count; kk++) 
-                CAD_Text(acDoc, acCurDb, GetVerticalPoinyByDistancd(5000, labelPoints[kk]), label[kk], angle[kk]); 
+                CAD_PLOT(GetVerticalPoinyByDistancd(LEN_BOUNDARY, bb), acDoc, ed, acCurDb);
+
+            for (int kk = 0; kk < labelPoints.Count; kk++)
+                CAD_Text(acDoc, acCurDb, SIZE_TEXT, TEXT_OFFSET_X, TEXT_OFFSET_Y, GetVerticalPoinyByDistancd(LEN_TEXT, labelPoints[kk]), label[kk], angle[kk]);
 
             return true;
 
         }
 
-      
+
         private static bool GetMileInformation(List<Point> tmpData, ref List<Point[]> milePoints, ref List<Point[]> labelPoints, ref List<string> label, ref List<double> angle, bool mileOpen)
         {
-            if (!mileOpen) return false; 
+            if (!mileOpen) return false;
 
             for (int i = 0; i < tmpData.Count; i++)
             {
@@ -180,7 +217,7 @@ namespace CADPllotTest
             {
                 if (exData[j, 0].Trim() != "" && exData[j, 1].Trim() != "" && exData[j, 2].Trim() != "")
                 {
-                    Points.Add(new Point(double.Parse(exData[j, 0].Trim()), double.Parse(exData[j, 1].Trim()), double.Parse(exData[j, 2].Trim())));
+                    Points.Add(new Point(double.Parse(exData[j, 0].Trim()), double.Parse(exData[j, 2].Trim()), double.Parse(exData[j, 1].Trim())));
                 }
             }
             return Points;
@@ -207,7 +244,7 @@ namespace CADPllotTest
         }
 
         private static Point[] GetTextCoor(Double D, Point[] Data)
-        { 
+        {
             double m = (Data[1].Y - Data[0].Y) / (Data[1].X - Data[0].X);
             double tmp = Math.Sqrt(D * D / (m * m + 1));
             double resX0, resY0, resX1, resY1;
@@ -255,7 +292,7 @@ namespace CADPllotTest
                 BlockTableRecord acBlkTblRec;
                 acBlkTblRec = transaction.GetObject(acBlkTbl[BlockTableRecord.ModelSpace],
                                                 OpenMode.ForWrite) as BlockTableRecord;
-                
+
                 // Create a polyline with two segments (3 points)
                 using (Polyline acPoly = new Polyline())
                 {
@@ -282,7 +319,7 @@ namespace CADPllotTest
 
 
 
-        private static void CAD_Text(Document acDoc, Database acCurDb, List<Point> point, string text, double angle)
+        private static void CAD_Text(Document acDoc, Database acCurDb, double SIZE_TEXT, double TEXT_OFFSET_X, double TEXT_OFFSET_Y, List<Point> point, string text, double angle)
         {
             using (Transaction acTrans = acCurDb.TransactionManager.StartTransaction())
             {
@@ -295,8 +332,8 @@ namespace CADPllotTest
                 // Create a single-line text object
                 DBText acText = new DBText();
                 acText.SetDatabaseDefaults();
-                acText.Position = new Point3d(point[1].X - 1500, point[1].Y - 12000, 0);
-                acText.Height = 5000;
+                acText.Position = new Point3d(point[1].X - TEXT_OFFSET_X, point[1].Y - TEXT_OFFSET_Y, 0);
+                acText.Height = SIZE_TEXT;
                 acText.TextString = text;
                 acText.Rotation = angle;
                 // Change the oblique angle of the text object to 45 degrees(0.707 in   radians)
@@ -306,7 +343,7 @@ namespace CADPllotTest
                 // Save the changes and dispose of the transaction
                 acTrans.Commit();
             }
-        }  
+        }
     }
 
 
