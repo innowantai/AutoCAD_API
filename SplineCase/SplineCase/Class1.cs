@@ -10,8 +10,7 @@ using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.PlottingServices;
-using ExcelClass;
-
+using ExcelClass; 
 [assembly: CommandClass(typeof(SplineCase.Class1))]
 namespace SplineCase
 {
@@ -23,31 +22,32 @@ namespace SplineCase
         public static string folder = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
         public static string SavePath;
         public static List<string> CheckedStr;
-        public static List<string> P_Layers;
+        public static List<string> P_Layers; 
+        
 
         [CommandMethod("sp")]
         public void Main()
-        {
+        { 
+            SplitSpline SplitForm = new SplitSpline();
+            SplitForm.ShowDialog();
+            if (SplitForm.DialogResult == System.Windows.Forms.DialogResult.OK)
+            { 
 
+                doc = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
+                db = doc.Database;
+                ed = doc.Editor;
+                Database acCurDb = doc.Database;
+                DBObjectCollection EntityCollection = new DBObjectCollection();
+                PromptSelectionResult ents = ed.GetSelection();
+                double num = Convert.ToDouble(SplitForm.txtNum.Text.Trim());
+                if (num > 0)
+                { 
+                    List<Spline> splies = Main_Process(ents);
+                    List<Point3d> data = SplintToExcel(splies, num);
+                    PlotLine(data, acCurDb);
+                }
+            }
 
-            doc = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
-            db = doc.Database;
-            ed = doc.Editor;
-            Database acCurDb = doc.Database;
-            DBObjectCollection EntityCollection = new DBObjectCollection();
-            PromptSelectionResult ents = ed.GetSelection();
-
-
-
-            PromptStringOptions pStrOpts = new PromptStringOptions("\n 輸入要等分的距離 :  ");
-            pStrOpts.AllowSpaces = true;
-            PromptResult pStrRes = doc.Editor.GetString(pStrOpts);
-            string num = pStrRes.StringResult.Trim();
-
-            List<Spline> splies = Main_Process(ents);
-            SplineProcessing(splies, Convert.ToDouble(num));
-            List<Point3d> data = SplintToExcel(splies, Convert.ToDouble(num));
-            PlotLine(data, acCurDb);
 
         }
 
@@ -115,27 +115,7 @@ namespace SplineCase
             return POINTs;
 
         }
-
-        private void SplineProcessing(List<Spline> splies, double span)
-        {
-            int kk = 0;
-            foreach (Spline sp in splies)
-            {
-                int cntNum = sp.NumControlPoints;
-                double spLen = sp.GetDistAtPoint(sp.GetControlPointAt(cntNum - 1));
-                double dist = span;
-                List<Point3d> POINTs = new List<Point3d>();
-                while (dist < spLen)
-                {
-                    POINTs.Add(sp.GetPointAtDist(dist));
-                    dist += span;
-                }
-                string Name = "Splint_" + kk.ToString();
-                SaveData(POINTs, Name);
-                kk = kk + 1;
-            }
-        }
-
+         
 
         private void PlotLine(List<Point3d> data, Database acCurDb)
         {
@@ -186,19 +166,7 @@ namespace SplineCase
         }
 
 
-
-        private void SaveData(List<Point3d> POINTs, string Name)
-        {
-            string PATH = Path.Combine(folder, "SplineTest", Name + ".txt");
-            StreamWriter sw = new StreamWriter(PATH);
-            foreach (Point3d item in POINTs)
-            {
-                string data = item.X + " " + item.Y + " " + item.Z;
-                sw.WriteLine(data);
-                sw.Flush();
-            }
-            sw.Close();
-        }
+         
 
 
 

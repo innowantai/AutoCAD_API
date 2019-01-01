@@ -20,9 +20,13 @@ namespace Ribbon
         { 
 
             RibbonControl rc = ribbonControl();
-            RibbonTab rt = ribbontab("ExcelToLine","1");
+            RibbonTab rt = ribbontab("UserDefinedApp", "1");
             RibbonPanel rp = ribbonPanel("Excel To Line");
-            RibbonButton rb = ribbonButton("讀取Excel", "E2P\n");
+            RibbonButton rb = ribbonButton("讀取 Excel", "E2P\n"); 
+
+
+            RibbonPanel rp2 = ribbonPanel("Split Spline"); 
+            RibbonButton rb2 = ribbonButton("等分 Spline曲線", "SP\n");
 
 
 
@@ -35,7 +39,9 @@ namespace Ribbon
             if (flag)
             {
                 rp.Source.Items.Add(rb);
+                rp2.Source.Items.Add(rb2);
                 rt.Panels.Add(rp);
+                rt.Panels.Add(rp2);
                 rc.Tabs.Add(rt); 
             }
 
