@@ -13,7 +13,7 @@ namespace SplineCase
 {
     public partial class SplitSpline : Form
     {
-        public string PATH_ = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+        public string PATH_ = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
         public string PATH;
 
         public SplitSpline()

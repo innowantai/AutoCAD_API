@@ -111,7 +111,7 @@ namespace SplineCase
             string PATH = Path.Combine(folder, "SplineTest", "SplineData.xlsx");
             EXCEL Excel = new EXCEL(PATH);
             Excel.Save_To(PATH, "SplineData", 1, 1, points);
-
+            Excel.close();
             return POINTs;
 
         }
