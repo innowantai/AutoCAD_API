@@ -43,6 +43,8 @@ namespace SplineCase
                 if (num > 0)
                 { 
                     List<Spline> splies = Main_Process(ents);
+                    if (splies.Count == 0) return;
+
                     List<Point3d> data = SplintToExcel(splies, num);
                     PlotLine(data, acCurDb);
                 }
